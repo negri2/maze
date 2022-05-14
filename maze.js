@@ -43,8 +43,13 @@ function generateMaze(e) {
 function resolveMaze(e) {
     e.preventDefault();
 
-    current = this.grid[0][0];
-    newMaze.grid[newMaze.rows - 1][newMaze.columns - 1].goal = true;
+    //buscar movimentos possiveis, retorna array
+        //removendo o movemnto anterio (para não voltar)
+        //se array é null, então pop na stack (volta)
+        
+    //random dentro daquele array
+    //salva a nova cell numa stack e marca como visitada
+
 }
 
 class Maze {
