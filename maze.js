@@ -223,12 +223,12 @@ class Maze {
 
         ctx.beginPath();
         ctx.fillStyle = reset ? '#4996f5' : '#cc0000';
-        ctx.arc(x, y, 6, 0, 2 * Math.PI, true);
+        ctx.arc(x, y, 5, 0, 2 * Math.PI, true);
         ctx.fill();
 
         ctx.beginPath();
         ctx.fillStyle = '#cc0000';
-        ctx.arc(newX, newY, 6, 0, 2 * Math.PI, true);
+        ctx.arc(newX, newY, 5, 0, 2 * Math.PI, true);
         ctx.fill();
     }
 
