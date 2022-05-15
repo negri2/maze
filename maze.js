@@ -2,22 +2,22 @@ let maze = document.querySelector(".maze");
 let ctx = maze.getContext("2d");
 
 let current;
-let goal;
 
 let form = document.querySelector("#settings");
 let size = document.querySelector("#size");
 let rowsCols = document.querySelector("#number");
-let complete = document.querySelector(".complete");
-let resolve = document.querySelector(".resolve");
-let reload = document.querySelector(".newMaze");
+let complete = document.querySelector("#complete");
+let resolve = document.querySelector("#resolve");
+let resolveBtn = document.querySelector(".resolve");
+let reloadBtn = document.querySelector(".newMaze");
 
 let newMaze;
 
 form.addEventListener("submit", generateMaze);
-resolve.addEventListener("click", resolveMaze);
-reload.addEventListener("click", () => {
+
+function reload(e) {
     location.reload();
-});
+}
 
 function generateMaze(e) {
     e.preventDefault();
@@ -43,12 +43,14 @@ function generateMaze(e) {
 function resolveMaze(e) {
     e.preventDefault();
 
-    //buscar movimentos possiveis, retorna array
-        //removendo o movemnto anterio (para não voltar)
-        //se array é null, então pop na stack (volta)
-        
-    //random dentro daquele array
-    //salva a nova cell numa stack e marca como visitada
+    complete.style.display = "none";
+
+    newMaze.current = newMaze.grid[0][0];
+    newMaze.grid[rowsCols.value - 1][rowsCols.value - 1].goal = true;
+    newMaze.grid[rowsCols.value - 1][rowsCols.value - 1].goalColor(rowsCols.value);
+    newMaze.stack = [];
+    newMaze.path = [];
+    newMaze.resolve();
 
 }
 
@@ -59,6 +61,7 @@ class Maze {
         this.columns = columns;
         this.grid = [];
         this.stack = [];
+        this.path = [];
     }
 
     setup() {
@@ -115,6 +118,133 @@ class Maze {
             this.draw();
         });
     }
+
+    resolve() {
+
+        //buscar movimentos possiveis, retorna array
+        //removendo o movimento anterior (para não voltar)
+        //se array é null, então pop na stack (volta)
+
+        //random dentro daquele array
+        //salva a nova cell numa stack e marca como visitada
+        let movs = [];
+        current.passed = true;
+
+        if (!current.walls.topWall) movs.push(1);
+        if (!current.walls.rightWall) movs.push(2);
+        if (!current.walls.bottomWall) movs.push(3);
+        if (!current.walls.leftWall) movs.push(4);
+
+        //remove last mov
+        if (this.path.length > 0) {
+
+            let lastMov = this.path[this.path.length - 1];
+            let movToRemove = this.invertMov(lastMov);
+
+            const _index = movs.findIndex(i => i === movToRemove);
+            if (_index !== -1)
+                movs.splice(_index, 1);
+        }
+
+        //remove mov visited
+        for (let i = movs.length - 1; i >= 0; i--) {
+            let next = this.getNextMov(movs[i]);
+
+            if (next.passed)
+                movs.splice(i, 1);
+        }
+
+        if (movs.length === 0) {
+
+            this.drawLinePath(current, this.stack[this.stack.length - 1], true);
+
+            current = this.stack.pop();
+            this.path.pop();
+        } else {
+
+            this.stack.push(current);
+
+            let random = Math.floor(Math.random() * movs.length);
+            let nextMov = movs[random];
+
+            this.path.push(nextMov);
+
+            let next;
+            if (nextMov === 1) //top
+                next = this.grid[current.rowNum - 1][current.colNum];
+            else if (nextMov === 2) //right
+                next = this.grid[current.rowNum][current.colNum + 1];
+            else if (nextMov === 3) //bottom
+                next = this.grid[current.rowNum + 1][current.colNum];
+            else if (nextMov === 4) //left
+                next = this.grid[current.rowNum][current.colNum - 1];
+
+            this.drawLinePath(current, next);
+            current = next;
+        }
+
+        if (current.goal) {
+            resolve.style.display = "flex";
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            this.resolve();
+        });
+    }
+
+    getNextMov(mov) {
+
+        if (mov === 1) //top
+            return this.grid[current.rowNum - 1][current.colNum];
+        if (mov === 2) //right
+            return this.grid[current.rowNum][current.colNum + 1];
+        if (mov === 3) //bottom
+            return this.grid[current.rowNum + 1][current.colNum];
+        if (mov === 4) //left
+            return this.grid[current.rowNum][current.colNum - 1];
+    }
+
+    drawLinePath(cur, next, reset = false) {
+
+        let cellSize = this.size / this.rows;
+
+        let x = (cur.colNum * cellSize) + (cellSize / 2);
+        let y = (cur.rowNum * cellSize) + (cellSize / 2);
+
+        let newX = (next.colNum * cellSize) + (cellSize / 2);
+        let newY = (next.rowNum * cellSize) + (cellSize / 2);
+
+        ctx.beginPath();
+        ctx.strokeStyle = reset ? 'black' : '#cc0000';
+        ctx.moveTo(x, y);
+        ctx.lineTo(newX, newY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.fillStyle = reset ? '#4996f5' : '#cc0000';
+        ctx.arc(x, y, 6, 0, 2 * Math.PI, true);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.fillStyle = '#cc0000';
+        ctx.arc(newX, newY, 6, 0, 2 * Math.PI, true);
+        ctx.fill();
+    }
+
+    invertMov(mov) {
+        switch (mov) {
+            case 1:
+                return 3;
+            case 2:
+                return 4;
+            case 3:
+                return 1;
+            case 4:
+                return 2;
+        }
+
+    }
 }
 
 
@@ -125,6 +255,8 @@ class Cell {
         this.parentGrid = parentGrid;
         this.parentSize = parentSize;
         this.visited = false;
+        this.passed = false;
+        this.goal = false;
         this.walls = {
             topWall: true,
             rightWall: true,
@@ -190,6 +322,14 @@ class Cell {
         let y = (this.rowNum * this.parentSize) / columns + 1;
 
         ctx.fillStyle = 'purple';
+        ctx.fillRect(x, y, this.parentSize / columns - 3, this.parentSize / columns - 3);
+    }
+    
+    goalColor(columns) {
+        let x = (this.colNum * this.parentSize) / columns + 1;
+        let y = (this.rowNum * this.parentSize) / columns + 1;
+
+        ctx.fillStyle = 'green';
         ctx.fillRect(x, y, this.parentSize / columns - 3, this.parentSize / columns - 3);
     }
 

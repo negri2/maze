@@ -14,17 +14,26 @@
 
     <h1 class="title">Maze Generator</h1>
 
-    <div class="complete">
+    <div id="complete" class="card-result">
         <h3>Maze Completed.</h3>
-        <button class="resolve">Resolve</button>
-        <button class="newMaze">New Maze</button>
+        <div class="actions">
+            <button onclick="resolveMaze(event)">Resolve</button>
+            <button onclick="reload(event)">New Maze</button>
+        </div>
+    </div>
+
+    <div id="resolve" class="card-result">
+        <h3>Maze Resolved.</h3>
+        <div class="actions">
+            <button onclick="reload(event)">New Maze</button>
+        </div>
     </div>
 
     <form id="settings" action="">
         <p>Maze Size</p>
         <input id="size" type="number" value="500" /></br>
         <p>Rows/Columns</p>
-        <input id="number" type="number" value="20" /></br>
+        <input id="number" type="number" value="10" /></br>
         <button id="submit" type="submit">Generate Maze</button>
     </form>
 
